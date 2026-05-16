@@ -1,0 +1,34 @@
+[project]
+name = "dealmill"
+version = "0.1.0"
+description = "Private, local deal sourcing tool — scrape, score (Claude), and surface motivated-seller deals across SMB, CRE, laundromats, car washes, self-storage."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.2",
+    "playwright>=1.59,<1.60",
+    "tf-playwright-stealth>=1.2,<2",
+    "curl-cffi>=0.7,<1.0",
+    "typer>=0.12",
+    "rich>=13.7",
+    "flask>=3.0",
+    "python-dotenv>=1.0",
+    "anthropic>=0.34",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+dealmill = "dealmill.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dealmill"]

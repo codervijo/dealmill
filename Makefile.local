@@ -1,0 +1,43 @@
+# Dealmill-specific overrides. Included LAST by $(BUILDER_PATH)/Makefile,
+# so anything defined here wins over the central targets.
+#
+# Usage (inside the dmill1 dev container after `make buildsh`):
+#   make run ARGS="scrape bizbuysell --limit 5"
+#
+# Hard rule: there is no host Python. The only targets allowed on the host
+# are `buildsh` (enters the container) and a few host-side utilities; every
+# stack target (`deps`, `build`, `run`, `test`, etc.) hard-fails outside Docker.
+
+# dev_container.sh env (consumed by `make buildsh`):
+#   CONTAINER_NAME=dmill1     -> project-named container, coexists with `mb1`
+#   HOST_PORT/CONTAINER_PORT  -> empty triggers --network=host
+export CONTAINER_NAME ?= dmill1
+export HOST_PORT      :=
+export CONTAINER_PORT :=
+
+# Host-mode guard. `IS_DOCKER` is defined by the central Makefile.
+# `refresh-cookies` is host-only by design (reads host's Chrome cookie DB
+# via browser-cookie3); the script self-bootstraps deps via uv's PEP 723.
+HOST_OK := buildsh help reclaim builder-copy playwright-smoke clean refresh-cookies
+
+ifneq ($(IS_DOCKER),yes)
+  REQ_GOAL := $(if $(MAKECMDGOALS),$(MAKECMDGOALS),help)
+  BAD_GOAL := $(filter-out $(HOST_OK),$(REQ_GOAL))
+  ifneq ($(BAD_GOAL),)
+    $(error Target(s) '$(BAD_GOAL)' must run inside the dmill1 container. Run `make buildsh` first, then `make $(BAD_GOAL)` from inside the container shell.)
+  endif
+endif
+
+ARGS ?=
+
+# Override Makefile.python's `run` so ARGS flow through to the CLI.
+# (GNU Make prints a benign "overriding recipe for target 'run'" warning.)
+run: deps
+	@$(UV) run $(PYTHON) -m dealmill $(ARGS)
+
+# Host-side cookie refresh. Self-contained uv script (PEP 723 inline deps).
+# Reads your Chrome cookie DB (via browser-cookie3 + OS keyring) and writes
+# cookies/<source>.json per the Playwright add_cookies() shape.
+.PHONY: refresh-cookies
+refresh-cookies:
+	@./scripts/refresh_cookies.py $(ARGS)
