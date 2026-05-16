@@ -3,9 +3,17 @@
 A private, local, single-user tool that scrapes motivated-seller listings across SMB acquisitions, commercial real estate, laundromats, car washes, and self-storage; scores each listing 1–10 for seller motivation via the Claude API; and surfaces high-score deals through a local web dashboard and a daily email digest.
 
 ## Hard constraints
-- **Local-only.** No cloud, no auth, no external database. The SQLite file on disk is the system of record.
+- **Local-only.** No cloud, no auth, no external database. Per-domain SQLite files on disk are the system of record.
 - **Single-user.** Runs on the owner's machine; not deployed.
 - **Stop-and-confirm between phases.** Phase N must be observed working by the owner before Phase N+1 starts.
+- **Independent domain databases.** Each domain (biz · auctions · franchises) gets its own SQLite file + schema + CLI subcommand tree. Different schemas, different scorers, different dashboards. They don't share rows.
+
+## Domain layout
+- `data/biz.sqlite` — business-for-sale listings (CL, Flippa, BBS, LoopNet, Crexi, FB)
+- `data/auctions.sqlite` — auction listings (v1.G; materializes when first auction scraper lands)
+- `data/franchises.sqlite` — franchise opportunities (v6; materializes with the franchise command)
+
+CLI shape: `dealmill biz {scrape|score|dashboard|reparse|db-status}`, similarly `auctions ...` / `franchises ...` once those land.
 
 ## Phase 1 — Scrapers
 

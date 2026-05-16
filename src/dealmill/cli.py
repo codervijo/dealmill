@@ -13,17 +13,30 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
+# Per-domain subcommand groups. Today only `biz` is populated. `auctions`
+# (v1.G) and `franchises` (v6) will get sibling subapps when those phases land.
+biz_app = typer.Typer(
+    name="biz",
+    help="Business-for-sale listings (CL, Flippa, BBS, LoopNet, Crexi, FB).",
+    no_args_is_help=True,
+)
+app.add_typer(biz_app, name="biz")
+
 console = Console()
 
 
 @app.callback()
 def _root():
-    """Force typer to always require a subcommand name (otherwise a single-command
-    app collapses and 'scrape bizbuysell' is parsed as 'bizbuysell' with 'scrape'
-    consumed as the command alias)."""
+    """Top-level callback. Each domain (biz / auctions / franchises) is its
+    own subcommand tree to keep DBs and workflows independent."""
 
 
-@app.command()
+@biz_app.callback()
+def _biz_root():
+    """Biz subcommand tree."""
+
+
+@biz_app.command()
 def scrape(
     source: str = typer.Argument(..., help="Source: bizbuysell | craigslist | loopnet | flippa | crexi | facebook."),
     limit: int = typer.Option(None, "--limit", help="Cap on inserts+updates this run."),
@@ -85,7 +98,7 @@ def scrape(
     console.print(table)
 
 
-@app.command()
+@biz_app.command()
 def reparse(
     source: str = typer.Argument(..., help="Source name (e.g. 'crexi', 'craigslist')."),
     verbose: bool = typer.Option(False, "--verbose", "-v"),
@@ -142,7 +155,7 @@ def reparse(
     )
 
 
-@app.command(name="db-status")
+@biz_app.command(name="db-status")
 def db_status():
     """Open the SQLite DB (creating it + applying schema if needed) and print
     its path and row count. Smoke confirms v1.A.2 schema applies cleanly."""
@@ -156,7 +169,7 @@ def db_status():
     )
 
 
-@app.command()
+@biz_app.command()
 def score(
     limit: int = typer.Option(20, "--limit", help="Max listings to score this run."),
     force: bool = typer.Option(
@@ -188,7 +201,7 @@ def score(
     console.print(table)
 
 
-@app.command()
+@biz_app.command()
 def dashboard(
     source: str = typer.Option(None, "--source", help="Filter by source (bizbuysell|craigslist|loopnet|flippa|facebook)."),
     min_score: int = typer.Option(None, "--min-score", help="Hide listings scored below this."),

@@ -67,3 +67,6 @@
 
 ## 2026-05-16
 > Add curl_cffi for real-Chrome TLS impersonation (defeats JA3/JA4). New browser mode `cffi` becomes the default for Akamai-protected sources (BBS, LoopNet) and the new v1.F Crexi scraper. CLI's `--browser` default flipped to None; per-source defaults applied. Crexi added as v1.F: same shape as LoopNet, cookie support, cffi default. Awaiting live test.
+
+## 2026-05-16
+> Three independent domain DBs: keep biz, auctions, franchises separate (separate SQLite files, separate schemas, separate CLI subcommand trees). Migration: rename `data/dealmill.sqlite` → `data/biz.sqlite` + `db/schema.sql` → `db/biz_schema.sql`. CLI: wrap existing commands under `biz` subapp (`biz scrape`, `biz score`, `biz dashboard`, `biz reparse`, `biz db-status`). Auctions/franchises subapps materialize when their phases ship. db.py refactored to be domain-aware via `db.connect(domain=...)` and per-domain env vars (DEALMILL_DB_BIZ, etc.); positional `path` arg preserved so tests still pass (74/74 green after refactor).
